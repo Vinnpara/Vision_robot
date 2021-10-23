@@ -1,0 +1,270 @@
+///////26/08/2021/////////
+
+////*FPS CHECK*///////
+calchist,normalize,calbackproj,threshhold not much drop in fps, with all, about 10-20 fps drop from 70-100
+Gaussblur alone slows it to around 20-30 fps
+calcback & thresh 70-100
+calcback & thresh & blur 40-50
+no change if kernel size is changed
+Get_back_proj function slows to about 30-35 fps 
+right left func (max 40) alone slows it down less than red green alone (max 16)
+all functions: 6fps
+///////27/08/2021////////
+test individualfunctions like shape det, dhape mom. some of the processes could be moved to outside the while loop.
+The template pics for stop,go,left,right. might be easier to use a class to initialize a processed template
+
+**Functions to test**
+
+Mat get_hist();
+double grad();
+double point_distance();
+Vec4i longer_line();
+double compare_hu();
+bool sec_time();
+double find_match_shape();
+
+void shape_det();
+void shape_mom();
+void Get_back_proj();
+bool Match_arrow();
+void det_lines();
+double vector_match();
+
+
+//////31/08/2021////////
+Could use a function to initialize mem variables, function needs to be before the constructor.
+Derived classes that call on base class constructor (if variables need to  be passed to it) starting out w c pp pg 910 S 15.3
+
+//////01/09/2021///////
+Could make improc an abstract class, they are not instatiated. arrow, sign could be derived from them
+
+//////02/09/2021//////
+function to initialize mem variables worked. the template classes are declared as global variables, so not passed
+as args to the Vision constructor. If get_back_proj cant be sped up, might be easier to go for a color filter.
+change the cap to a contructor argument, calling it in the loop might be slowing it (worked no noticeable speed increase).
+get_back_proj could return both treshes so that red and green could be combined. same with match arrow func. could be merged and call compare_hu
+twice in one func. Try to make func to fit the whole serial comms bit
+
+///////03/09/2021/////
+Bringing all variables into one class, see if making the ve1 global variables would work.
+
+////*FPS CHECK*///////
+with all functions running 12-14 fps
+stop_go alone running at 14-20 fps
+left_right only running at 25-32 fps
+No functions running at 35-45+ fps
+
+To make SerialPort a member variable of vision, might have to make a copy construtor. Robot functions changed doesnt need arguments anymore
+setter functions for v1, v2 and make them private. look into send info func
+
+///////04/09/2021/////
+The reason the manual function doesnt work properly seems to be cause the program is too fast. 24/08 back up had the cap>>fr statement 3 times it worked properly here
+but not in 27/08 backup, which only has one instance of frame capture. Try to revert to send_info() func in main. use the same timer as the fps counter for the left/right (didn't work),
+The robot functions could be their own class, derived from vision. so robot will work on its own to send/recieve data.The send info function works fine in 24/08 back up
+
+//////05/09/2021////
+Moved the robot to its own class, to see if it can operate on its own. Changing the code to send chars instead ints
+F- forward, B-backwards, R-right, L-left. Without the dist and light it works fine. The code to get the duration for the distance seems to be the problem.
+delaying on arduino side also seems to mess it up. light in V_other seems to work, use the robot class to send, receive data.
+
+//////06/09/2021////
+The robot works now but might be dodgy. seems like the Sleep() time in both send and receive functions must be the same. Working version in V_other named light. All functions work,
+the robot works ok for all fps. Turn left and right functions updated with new timer. No change the frame freezes cause of the while loop. could use a bool instead to let sys know when to go straight
+if it becomes a problem. pos1  about 125mm infront is the bottom of the screen, pos2 150mm. angle the camera a bit. it would be a compromise. the robot needs to see the arrow as well
+a road width of 20 mm seems ok. the left right functions need some work, kinda easy to fool. Could use something like the perimeter, moments match like the stop/go. use img_mom(), see if there is a way to 
+use another additional parameter to findthe arrows
+
+///07/09/2021///
+Road function is very slow needs a lot of work. Got max 8fps with it alone. For HSV figures,in that order (max,min): ((130,0),(179,0),(106,0)) seems ok. these could change the H & S values dont have much affect
+only V. Running with canny and cropped img dlows it to about 20-22 fps. with the houghP lines function, possible to get 20fps but the V value needs to be optimized, can vary from 15,10-20 fps. dialating slows to 13fps
+but gives better line aproxx. Check the OpenCV c++ textbook as ref
+
+///08/09/2021///
+Road func split to left and right, it can detect the lane. need some param to correctly identify it. could use smth to find y dist to the ref line. Find the parrallel distance of the points to the ref line. maybe that could be 
+used. 
+
+///09/09/2021//
+can detect when the robot is tacking left or right. implement a func to identify if there are two lane and identify them.
+the tacking has to be detected from the inner lane. Funtion to take the lines from the vector of lines vector<Vec4i> linesP and figure out which is the inner and outer if
+num_lines==2. could be easier to make a class called Lane. would probs need to do more processing put line functions into it 
+
+///10/09/2021///
+The lane class needs to work with a single or with two lines. with two lines it needs to identify which is outer and which is inner
+can be done by finding the difference. the line furthest away is the outer lane. Try with half screen, so constructor takes in two args, the imcany, and left or right.
+so the adjustment factor for the points depends on left or right. this could be a bool, left tru right false. r_poly, r_poly_adj is unique. int di_1,di_2 can be a bool in the lanes func. could inherit 
+a class called lane_intersect, takes the points from left, right lanes and sees what angle is made with the ref line. For the left, right lane make sure the adjusted top, bottom points. same in st_anle when calculating intersection angle
+check if the intersecting thing works on vid
+
+//11/09/2021///
+Another function to figure out what line is outer and inner lane. having the bool system seems really tedious, just seperate into functions. the adjustment values need working. it can identify outer/inner lanes but the blue line doesnt follow
+the lane. and right lane doesnt show out/in exactly. Intersect point doesnt work needs work.
+the blue line might be the problem. 
+
+//12/09/2021///
+The tracking left func change. point 2 is more important
+Virtual lane: get the bt point from both lines and use m=-1 for blue line and m=1 for red line with the bt points to create a lane
+use this. the deviation angle can be calculated but sometimes it doesnt give accurate values. 
+This is likely cause a line dist value-->0, l2 sometimes goes to 250+, its similar in lenght to l1 which is around 140
+
+//13/09/2021///
+track width of the robot is about 100mm, making road to be about 130mm with the current cropping, the robot can see 48 cm ahead. l2->250+ could be becuase of sometime m is shown as 0. Makes the int_sct point blow the refline. Might be better to alternate between the m values used.
+double can give better values if the m is <0.5, int would just give 0. Make a func to do do all that, if the m values are >1 or <-1, it means the robot is way off, in this case use the tracking values or maybe a func to monitor the area made by both polygons. The idea is that all these
+funcs (point intersect, tracking value, and polygon) work to detect if robot is veering off. try loading in only the lines that meet the citeria into the vector. The angle intersection works better, sometimes itll give nand. use the draw polygon se if the deviation can be detected using the ref line relative to the polygon
+
+//14/09/2021///
+For the road polygon: inner left lane tp, bt refline tp, bt inner right lane tp, bt. works better with the && num_lines.size()<2 removed for lane func that is probs not needed.
+the road func for the left lane sometimes gets the wrong point for top left. the angle deviation is still very finiky, it keeps getting weird values.
+Likely because of the intersection point. use the codes in vid to figure out whats wrong. Put  alimit on the ranges for which thet_dev is calculated.
+the expected gradients are -1 and 1 for left and right, so theta dev is only calculated when its those m values, or if the point_insct is within a certain range
+it should be used with the tracking distance.
+
+//17/09/2021//
+the intersection point appears on the top left sometimes bc it finds intersection of inner outer line of the same lane
+function to take the lines and find the longest one and also one that is furthest from screen, also when detecting an inner outer lane, there needs to be a minimum distance cause itll find two lines in the inner section.
+if there are more than two lanes find the longest two
+
+//18/09/2021//
+split the (point intersect, tracking value, and polygon) into there own functions 
+able to odentify longest and second longest lines. find the centroid of the poly made by the points of the two lines <<https://en.wikipedia.org/wiki/Centroid#Of_a_polygon>>
+something wrong with cx,cy, seems like the number is to small. Or something goiong wrong with loss off data. (1 / (6 * a)) is a very small number, probs the problem float, double doesnt work on that.
+with the centroid, inner and outer lanes can be identified. if the x dist is > x centroid, it is outer for red, inverse for blue. <<https://stackoverflow.com/questions/31303397/handling-extremly-small-numbers-in-c/31304261>>
+function to find the power of a number
+
+//19/09/2021//
+instead of using both l1, l2 values use just the x cordinates of ln2, becuase what we need is just a poly for lane ie the width
+use the longest line. use the same y cordinates but the shorter lenghts x cordinates
+
+//20/09/2021//
+drw poly now contains centroid func
+
+//21/09/2021///
+for the centroid  func: "Remember that the vertices should be inputted in order and the polygon should be closed - meaning that the vertex (x0,y0) is the same as the vertex (xn,yn)".
+Area (a) value is correct. Centroid function works, but the points shown in draw poly dont make sense, theyre different from the points in the line func. The polygon self intersects sometimes. gota fix
+if theres only one line, use that as the inner, if there are two, pass to the drw_poly to figure ot the centroid and choose the one behind the centroid (inner lane)
+need to find if the lines are parallel and the distance between them.<<https://en.wikipedia.org/wiki/Distance_between_two_parallel_lines>> 
+<<https://courses.lumenlearning.com/collegealgebra1/chapter/given-the-equations-of-two-lines-determine-whether-their-graphs-are-parallel-or-perpendicular/>>
+use a second for loop to check all the lines to look for a line that is parrallel, then find the longest of these that matches the criteria for minimum parralel distance.
+
+//25/09/2021//
+icoporate the line similar func to the longest two lines func. the inner lane has a grad of 0.8-0.9, wil the outer has a grad 0.6. also find the angle between lines.
+the Lines class doesnt seem to work. Its probably the () operator function
+
+//26/09/2021//
+take the line made between the centre points of the two lines and find the angle it makes.
+see diagram noted as Lane::ang_twolines(Line l1, Line l2). the line func works, can identify two lines of the lane.
+the x,y cords for the polgon cntrd need to be figured out.
+
+//27/09/2021///
+inner outer function works now works, replace the code to determine inner outter lane to use the centre of the ref line.
+
+//28/09/2021///
+The inner outer lane works, but doesnt detect the left lane inner/outer that well. use the eqn for distance between 
+point and line. that line is the ref line ie x=(fr.size().width)/ 2 (https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line)
+(https://www.intmath.com/plane-analytic-geometry/perpendicular-distance-point-line.php)
+
+//29/09/2021///
+in_out func work better now, it sees a horizontal line occasionally cause of the edges
+of the table, probs can be fixed by adding a condition for the m of line ie m>0.5 or smth
+add xc, yc as var on the lines func. Need to make sure it also works if theres only one line.
+angle of intersection works for 1 and 2 lines, for the blue side, it can 
+
+//1/10/2021///
+intersection line works well on the floor. the tracking values not so much. needs work, check the horizontal x dist
+
+//2/10/2021///
+Make sure the lines have the cor_value set if they are used. The screen size is 640X480
+the tracking distance and angle detections work now, implement the robot. Pass R1 as an arg to the Lane constructor,
+so it can be used in 
+
+//3/10/2021//
+The set_val doesnt work well for changing the steer values, might be better to pass 
+Robot to the Lane class. or try working the stop, go, left, right func.
+Val max should be around 100. for steer function, make it like trun right.
+new steer function turns for specified time then goes straight. this works pretty well. Not so much whn it deviates more tho,
+might have to have different t values in robot_st_left(t) so that at the very edges of the road, it makes a bigger turn.
+or figure out how many deg/sec the car turns at, use the deviation angle to figure out how long to turn for. but the angle value occasionaaly gives bad values
+also same for distance values, that works with the deviation angle.
+
+//4/10/2021//
+Based on average results, robot takes 1.8957 sec to turn right by 90 (one motor) and 1.599 sec to turn left by 90 (one motor).
+So 0.0210633 seconds for one degree (right). And 0.01776 seconds for one degree (left).
+for both motors right turn 90 takes 0.7581 seconds, and for left 90 trun it takes 0.69125
+
+//5/10/2021//
+Robot has trouble when it approaches a turn, will mistake the horizontal lanes for verical, the gradient criteria needs to be higher.
+Also the servo prob is still there, it works fine sometimes, but after a while it goes to shit. When it approaches a turn, 
+a function to guess the pos of the lane on the other side could work, take the line it sees and mirror it about the ref line, or try to use just the one
+line. On the right side, gradient must be +ve, on the left it has to be -ve
+
+//6/10/2021//
+The sevo prob seems like it happens because its sends info twice, in the main and in the functions.
+
+//7/10/2021//
+Removing the sind_info() in main then makes it so that the sensor data onlt updates when the move commands are sent. 
+This isnt such a probs cause from the road function,the robot will have a comand for most cases. 
+if theres a prob try using a bool to avoid sending info twice.
+
+//8/10/2021///
+it could help to make the stop go, left right into it own function, inherited from improc, and improc could take the fr, and template pics as args,
+the inherited classes can then use that. The lane function can be inherited form improc, line can be an independent class.
+it could be better to implement the turn func based on the angle, the 0.05 sec deosnt work for all angles.
+the robot needs to aligin itself with the turn arrow and then turn 90, bc without it it tends to over, undershoot.
+it might not be a prob if the turn func based on the angle aligns it first.   
+
+//9/10/2021//
+the turn according to angle made works ok, but most of the time it turns according to a single lane, so
+its probs better to replace the distance criteria of tracking detection to find the anle between the ref and lane line. if the horizontal 
+dist is less than a specified val, itll calc angle between the lines and adjust accordingly.
+The turn func based on the angle works okay but its finicky, look into the trapezoid to rectangle transformation, might also need to idenity outer, inner lanes
+based on dist to ref line.
+
+//10/10/2021//
+best to use either getperspective and then warp perspective, or find homography and use warp perspective
+https://www.youtube.com/watch?v=I8tHLZDDHr4
+https://www.youtube.com/watch?v=PtCQH93GucA
+https://www.youtube.com/watch?v=fVJeJMWZcq8
+https://www.youtube.com/watch?v=nBB2L419EfI
+Warp perspective works, the parameters for the houghlines might not be the best, might need tweaking, same with the find longest line.
+but it seems to work better. Get the angle made between the ref line and detected line, 
+
+//11/10/2021//
+For the find lines,if theres is more than one line, first find the ones that are adaqueatly spaced apart, then find the longest of those
+lines. paralel_dist function works, implement find longest line. the angle estimation is pretty accurate to about +- 10 degrees approx,
+it gets more exagerated the larger the angle.find the longest line, then find the parrelel lines to that. the parralel lines get the longest.
+Use the poly cntr func to figure out inner and outer lines. use the inner line to determine angle. See if the warp lines could be widened,
+x-direction, so that the lane is still detected for the go straight function. Could replace intersection func.
+
+//12/10/2021//
+parrallel funcworks but it has multiple on each lines. could look for similar lines and combine to one line.
+
+//13/10/2021//
+Aggregate line func needs work.
+
+//14/10/2021//
+Try a func that rejects lines' parrallel_dist >= set value of the 2 longest lines 
+
+//15/10/2021// rb is bottom of red line
+for the aggregate func, run the parrallel lines function right after finding the lines. if the lines are not of a min
+parrallel dist or dist==0, add the other lines to another vector. of these lines, check the gradient, if they are +/-0.05
+get the midpoint and for the line closet to the yaxis take the rt, and for the line furthest from yaxis take the rb, the lane line 
+has the points of those rt, rb values.
+
+//16/10/2021//
+a parralel dist of 4 seems acceptable. mdiff of 0.09. line aggr seems to work ok now. it might not work properly for
+blue line, since the p1& p2 points are opposite.
+
+//17/10/2021///
+The warped angle over estimates the actual angle, the larger the angle the more the deviation, get different values for the warped 
+anf find its corredponding real angle, then get a relationship between them to figure out between them to use as a conversion factor.
+Use the quadratic regression, its accurate enough, the pow() function deosnt work that well
+
+//19/10/2021//
+pow() func works, the turning function works ok, the white guide lines need to be lined up properly to work
+also more sensitive to camera pos. but works better now. still might need a function to align it with the arrow.
+
+//20/10/2021//
+The robot seems to correct itself too much, might be better to limit the time used to turn, so the most for 
+the angle made would be t=0.2. needs to be tested, so the robot would only make small corrections. The problem seems to be the
+camera angle, it needs to be in line with the lanes, after afew trys shit happens and the camera is moved, thats when it overcorrects
+The lines that get the outside lanes as well seems to work, it might need a different correction angle approx. func.
+also the cables are fucked.
