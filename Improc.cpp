@@ -27,6 +27,9 @@ using namespace std;
 
 
 void Improc::shape_mom() {
+	//function finds the properties that stop_go() uses to find the stop/go
+	//signs. They are both hexogonal in shape. The function obtains the perimeter
+	//aspect ratio, and the angle the vertices make with repect to the centroid.
 	Mat gray, iblur, canny;
 	
 	Point c;
@@ -57,6 +60,7 @@ void Improc::shape_mom() {
 		convexHull(contours[i], hull[i]);
 		peri = arcLength(hull[i], true);
 		//drawContours(img, hull, (int)i, color, 2, LINE_8, hierarchy, 0);
+		//the centre is found using the image moments
 		mu[i] = moments(hull[i]);
 		mc[i] = Point2f(static_cast<float>(mu[i].m10 / (mu[i].m00 + 1e-5)),
 			static_cast<float>(mu[i].m01 / (mu[i].m00 + 1e-5)));
@@ -90,7 +94,8 @@ void Improc::shape_mom() {
 }
 
 void Improc::get_mask() {
-
+	//retrieves the mask of the arrow images for
+	//Match_arrow()
 	Mat HSV;
 	Scalar l(0, 0, 0);
 	Scalar u(179, 255, 158);
@@ -102,8 +107,9 @@ void Improc::get_mask() {
 }
 
 void Improc::get_hist() {
-	Mat hsv, hue;  /// OG function uses &hist, &color, cannot return them and they cant be rvalue and canot reutrn. 
-	               /// have to fix. 
+	//Creates a histogram used in stop_go() to find
+	//red or green signs
+	Mat hsv, hue;                  
 	Mat dest;
 
 	//Mat kernel = getStructuringElement(MORPH_RECT, Size(5, 5));

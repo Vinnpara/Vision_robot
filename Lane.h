@@ -24,7 +24,11 @@
 
 using namespace cv;
 using namespace std;
-
+//The Lane class is used to identify the tracks. It uses 
+//the probablistic Hough lines transform functions to indentify the line.
+//the class crops the bottom quter of the screen and
+//applies a perspective transform. It then uses the Canny edge detector and 
+//identifies lines usign the HoughLinesP() function.
 class Lane {
 	Mat can, fr;
 	Mat road, can_road;

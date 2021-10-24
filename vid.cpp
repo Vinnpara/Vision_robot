@@ -34,19 +34,19 @@
 using namespace cv;
 using namespace std;
 using namespace chrono;
-
-
+//Where the Vision class is used and the templates are loaded.
 void main() {
 	
-	VideoCapture cap(1);
+	VideoCapture cap(1);  //capture video from a webcam
 	if (!cap.isOpened()) {
 		cerr << "ERROR: Could not open camera" << std::endl;
 		
 	}
 
-	int hmin = 0, smin = 0, vmin = 0;
+	int hmin = 0, smin = 0, vmin = 0;  //HSV limits for finding lanes
 	int hmax = 179, smax = 255, vmax = 255;
 
+	//Read in the pictures used as templates.
 	Mat right = imread("Right.jpg");
 
 	Mat left = imread("Left.jpg");
@@ -57,21 +57,21 @@ void main() {
 	Mat go = imread("Green_Sign_hist(jpg).jpg");
 	GaussianBlur(go, go, Size(7, 7), 0, 0, BORDER_DEFAULT);
 
-
+	//initalize the vision class
 	Vision V(right, left, stop, go, cap);
 
 	while (1) {
 		
-			V.get_info();
-			V.capt();
-			V.manual();
-			V.info();
+			V.get_info(); //receive from arduino
+			V.capt();     //capture video
+			//V.manual();   //manually control (if needed)
+			V.info();    //display info from arduino
 
-			V.stop_go();  
-			V.Road(hmin, hmax, smin, smax, vmin, vmax);  
-			V.left_right(); 
+			V.stop_go();   //Detect srop/go signs
+			V.Road(hmin, hmax, smin, smax, vmin, vmax);   //detec lanes
+			V.left_right();  //detect left/right arrows
 
-			V.disp();
+			V.disp();    //display the processed feed on the screen
 			waitKey(1);
 		
 	}

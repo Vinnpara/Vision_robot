@@ -37,6 +37,7 @@ Lane::Lane(Mat F) {
 }
 
 int Lane::point_distance(Point t1, Point t2) {
+	//Finds the distance between two points
 	int d;
 
 	d = sqrt(((t2.x - t1.x) * (t2.x - t1.x)) + ((t2.y - t1.y) * (t2.y - t1.y)));
@@ -46,6 +47,7 @@ int Lane::point_distance(Point t1, Point t2) {
 }
 
 int Lane::point_distance(Vec4i l1) {
+	//Finds the distance of the provided Vec4i
 	int d;
 	Point t1, t2;
 	t1.x = l1[0];
@@ -61,7 +63,8 @@ int Lane::point_distance(Vec4i l1) {
 }
 
 Point Lane::mid_point(Point l1, Point l2) {
-
+	//returns mid point of the line created by the 
+	// provided two points
 	int x1 = l1.x;
 	int x2 = l2.x;
 
@@ -80,8 +83,7 @@ Point Lane::mid_point(Point l1, Point l2) {
 }
 
 void Lane::ref_line() {
-
-
+	//Creates the reference line
 	Rect roi;
 	roi.x = 0;
 	roi.y = (fr.size().height) * (0.75);
@@ -106,7 +108,8 @@ void Lane::ref_line() {
 }
 
 int Lane::grad(Point t1, Point t2, double& mg) {//bt,tp
-
+	//returns the gradient of the line created by the two points
+	//also provides the gradient as a double for accuaracy
 	int m;
 	int nume = (t2.y - t1.y);
 	int deno = ((t2.x - t1.x) + 1e-7);
@@ -121,6 +124,8 @@ int Lane::grad(Point t1, Point t2, double& mg) {//bt,tp
 }
 
 double Lane::grad(Vec4i l) {
+	//Finds the gradient of a line 
+	//created by the Vec4i
 	int x1, x2, y1, y2;
 
 	double m;
@@ -140,7 +145,8 @@ double Lane::grad(Vec4i l) {
 }
 
 void Lane::get_eqn(Point t1, Point t2, double& m, int& c) {
-
+	//finds gradient and y intercept of the line
+	//described by two points
 	int nume = (t2.y - t1.y);
 	int deno = ((t2.x - t1.x) + 1e-7);
 
@@ -188,6 +194,8 @@ bool Lane::m_diff_tol(Line l1, Line l2, double d) {
 }
 
 bool Lane::m_diff(Line l1, Line l2, double d, double& md) {
+	//returns true if the difference between the m of the two lines is within the tolerance
+	//specified, also provides the difference in the gradients (md)
 	bool diff;
 	diff = false;
 	double m1 = abs(l1.get_md());
@@ -264,6 +272,8 @@ bool Lane::similar_line(Vec4i l1, Vec4i l2, int d_req) { // fist line to compare
 }
 
 int Lane::vert_point(double m, int c, int x) {
+	//returns the y cordinate of a corresponding x cordinate for a provided line
+	//Line is decribed by gradient and y intercept
 	int y;
 
 	y = (m * x) + c;
@@ -323,9 +333,8 @@ double Lane::dist_point_line(Point p, int cor, bool vert) {
 }
 
 double Lane::ang_twolines(Line l1, Line l2) {
-	//see the diagram for details
-
-
+	//Finds the angle between two lines
+	//https://www.cuemath.com/geometry/angle-between-two-lines/
 	Point t, b;
 	double thet, m1, m2;
 
@@ -345,6 +354,7 @@ double Lane::ang_twolines(Line l1, Line l2) {
 }
 
 double Lane::ang_w_yaxis(Line l) {
+	// Finds the angle made by a line and the y axis (ie angle with respect to the vertical
 	double x, y;
 	Point t1, t2;
 	t1 = l.p1();
@@ -359,8 +369,7 @@ double Lane::ang_w_yaxis(Line l) {
 }
 
 double Lane::left_ang_actual(double ang) {
-	//8th polynomial actually not 6 chang in header file
-
+	//8th polynomial 
 
 	 ///LEFT HAND POLYNOMIAL corrections
 	double x8 = -0.00000000002762 * pow(ang, 8);
@@ -378,8 +387,7 @@ double Lane::left_ang_actual(double ang) {
 }
 
 double Lane::right_ang_actual(double ang) {
-	//8th polynomial actually not 6 chang in header file
-
+	//8th polynomial actually 
 
 	///RIGHT HAND POLYNOMIAL corrections
 	double x8 = -0.000000000046327 * pow(ang, 8);
@@ -397,7 +405,7 @@ double Lane::right_ang_actual(double ang) {
 }
 
 bool Lane::min_parrallel_dist(Line l1, Line l2, double d) {
-
+	//retuns true if the two parrallel lines are within a specified distance
 	bool dist_l = false;
 
 	double c1, c2, m1, m2, dist;
@@ -405,7 +413,7 @@ bool Lane::min_parrallel_dist(Line l1, Line l2, double d) {
 	m1 = l1.get_md();
 	m2 = l2.get_md();
 
-	if (abs(m1 - m2) > 0.05) {
+	if (abs(m1 - m2) > 0.05) { //minimum difference in gradient between the lines
 		dist_l = false; //lines arent parralel if the gradients are different
 	}
 	else {
@@ -428,7 +436,9 @@ bool Lane::min_parrallel_dist(Line l1, Line l2, double d) {
 }
 
 bool Lane::min_parrallel_dist(Line l1, Line l2, double d, double tol) {
-
+	//overloaded version
+	//retuns true if the two parrallel lines are within a specified distance
+	// allows the required difference in gradient to be specified
 	bool dist_l = false;
 
 	double c1, c2, m1, m2, dist;
@@ -661,6 +671,7 @@ vector<Line> Lane::lane_lines(vector<Vec4i>& lines, double m_tol, int th_l, int 
 }
 
 vector<Line> Lane::det_in_out(Line l1, Line l2, Point cntrd, int xc, int yc) {
+	//Determines which line is the outer and inner line determined by the centroid point (cntrd)
 	//lns[0]=inner, lns[1]=outer
 	int tpx;
 	tpx = (fr.size().width) / 2;
@@ -699,7 +710,8 @@ vector<Line> Lane::det_in_out(Line l1, Line l2, Point cntrd, int xc, int yc) {
 
 Point Lane::poly_ctr(Vec4i& ln1, Vec4i& ln2) {
 	//returns the centroid of a 4 sided polygon
-
+	//The polygon is defines by the two lines porvided, therefore the polygon 
+	//is the lane found, the centroid is the center of the line
 	vector<vector<Point>> pts;
 	vector<Point>l1, l2;
 
@@ -717,7 +729,7 @@ Point Lane::poly_ctr(Vec4i& ln1, Vec4i& ln2) {
 	int d1 = point_distance(road_cord[0][0], road_cord[0][2]);
 	int d2 = point_distance(road_cord[0][1], road_cord[0][3]);
 
-	///see diagram in note book, the points change depending on which line is longer
+	
 	if (d1 > d2) {
 		xpts.push_back(ln1[0]);
 		xpts.push_back(ln2[0]);
@@ -798,9 +810,9 @@ Point Lane::poly_ctr(Vec4i& ln1, Vec4i& ln2) {
 Point Lane::lane_poly_ctr(Line l1, Line l2, int xc, int yc) {
 	//Function takes two lines and draws a polygon, finds the centroid
 	//and determines which is the inner and outer lane.
+	//overloaded version, take Line as argument instead of Vec4i
 	vector<int>xs;
 	vector<int>ys;
-
 
 	Point l1t, l1b, l2t, l2b;
 	l1t = l1.p1(xc, yc);
@@ -887,7 +899,8 @@ Point Lane::lane_poly_ctr(Line l1, Line l2, int xc, int yc) {
 }
 
 void Lane::virtual_road() {
-
+	//Applies the perspective transform function provided by OpenCV
+	//to detect the lanes
 	Rect roi;
 	roi.x = 0;
 	roi.y = (fr.size().height) * (0.75);
@@ -900,7 +913,7 @@ void Lane::virtual_road() {
 	vector<Point2f>L2, R1;
 	Point2f r1, r2, r3, r4;
 
-
+	//two lines on either side of the screen where the lanes should appear
 	r1.x = 63;
 	r1.y = 375;
 	r2.x = 2;  ///includes the outer lanes
@@ -930,9 +943,11 @@ void Lane::virtual_road() {
 	L2.push_back(cp3);
 	L2.push_back(cp4);
 
+	//the two lines R1 and L2 describe the region where
+	//the transformation would take place
 	Mat mtrix = getPerspectiveTransform(R1, L2);
 	Mat res;
-	warpPerspective(fr, res, mtrix, fr.size());
+	warpPerspective(fr, res, mtrix, fr.size()); 
 
 	Rect roi2;
 	roi2.x = 0;
@@ -942,7 +957,8 @@ void Lane::virtual_road() {
 
 	road = res(roi2);
 
-
+	//The reference line vertical line drawn at the mid point
+	//of the screen
 	tp_adj_r.x = (cr.size().width) / 2;
 	tp_adj_r.y = cr.size().height;
 	bt_adj_r.x = (cr.size().width) / 2;
@@ -964,7 +980,11 @@ void Lane::drw_ref_line() {
 }
 
 void Lane::virtual_road(Line l1, Line l2) {
+	///Applies the perspective transform function provided by OpenCV
+	//to detect the lanes
+	//Overloaded version allows R1 and L2 to be specified
 	int d1, d2;
+
 
 	d1 = l1.dist();
 	d2 = l2.dist();
@@ -1171,7 +1191,7 @@ vector<Line> Lane::parrallel_lines(vector<Vec4i>& lines, double dis_min) {
 
 void Lane::road_can(Scalar lower, Scalar upper) {
 	Mat HSV, mask;
-
+	
 	cvtColor(road, HSV, COLOR_BGR2HSV);
 
 	inRange(HSV, lower, upper, mask);
@@ -1323,6 +1343,12 @@ vector<Line> Lane::line_aggr(vector<Line>lines, double d, double tol) {
 }
 
 vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d) {
+	//This function combines the lines of each vector to create the longest lines for each vector.
+	//of the lines found, the line closest to the y-axis(top of the screen)
+	// and the line furthest from the y-axis are chosen.
+	// Then, for the aggreagte line, the top point is taken from the line closest to the y-axis
+	// and the bottom point is taken from the line furthest from the y-axis are chosen.
+
 	vector<Line> l_1;
 	vector<Line> l_2;
 	vector<Line> lane;
@@ -1453,7 +1479,9 @@ vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d) {
 }
 
 vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d, double tol) {
+	//This function combines the lines of each vector to create the longest lines for each vector.
 	//overloaded version that uses the min parallel dist check
+
 	vector<Line> l_1;
 	vector<Line> l_2;
 	vector<Line> lane;
@@ -1462,7 +1490,7 @@ vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d, do
 	if (!lines.empty() && !lines2.empty()) {
 
 
-		Line Li1 = lines[0];
+		Line Li1 = lines[0]; //ensures that all lines have the same gardient and acceptable minimum parralel distance
 		for (size_t i = 0; i < lines.size(); i++) {
 			Line l1 = lines[i];
 			bool m_sim = min_parrallel_dist(Li1, l1, d, tol); //minimum dist, m tolerance
@@ -1481,11 +1509,11 @@ vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d, do
 		}
 
 
-		if (l_1.size() > 1) {
-			Line L_1 = l_1[0];
-			int d_y;
-			Point md1 = L_1.mid();
-			d_y = md1.y;
+		if (l_1.size() > 1) { //of the lines found, the line closest to the y-axis(top of the screen)
+			Line L_1 = l_1[0];// and the line furthest from the y-axis are chosen.
+			int d_y;          // Then, for the aggreagte line, the top point is taken from the line closest to the y-axis
+			Point md1 = L_1.mid(); // and the bottom point is taken from the line furthest from the y-axis are chosen.
+			d_y = md1.y;           
 			int longest = d_y;
 			Point l1t;
 			Point l12;
@@ -1527,8 +1555,8 @@ vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d, do
 		}
 		//int l = L1f.get_c();
 
-		if (l_2.size() > 1) {
-			Line L_1 = l_2[0];
+		if (l_2.size() > 1) {//Same for the second line
+			Line L_1 = l_2[0]; 
 			int d_y;
 			Point md1 = L_1.mid();
 			d_y = md1.y;
@@ -1584,7 +1612,8 @@ vector<Line> Lane::line_aggr(vector<Line>lines, vector<Line>lines2, double d, do
 }
 
 void Lane::find_R_lane_warped() {
-	//tp_adj, bt_adj is ref line
+	//tp_adj, bt_adj is ref line uses the probablistic Hough line transform
+	//This function identifies the Right lane
 	if (!can_road.empty()) {
 
 		Rect roiR;
@@ -1626,7 +1655,7 @@ void Lane::find_R_lane_warped() {
 			Line l0 = linesPR[0];
 			Line l1 = linesPR[i];
 
-			if ((abs(m) > 0.5) && m > 0) {
+			if ((abs(m) > 0.5) && m > 0) {  //isolates the lines of specified gradients
 
 				linesPRm.push_back(linesPR[i]);
 
@@ -1647,7 +1676,9 @@ void Lane::find_R_lane_warped() {
 			double m;
 			bool m_d = m_diff(l0, l1, 0.01, m);
 
-
+			//Checks the first line found against all successive lines, 
+			//then if they are parrallel and within a specified distance
+			//they are loaded into linesPR1, if not they are loaded into linesPR2
 			bool is_parallel = min_parrallel_dist(l0, l1, 30.0, 0.2);
 			if (is_parallel == true) {
 				linesPR1.push_back(l1);
@@ -1690,13 +1721,13 @@ void Lane::find_R_lane_warped() {
 		}
 
 		if (!linesPR1.empty()) {
-			//cout << "\nHERE ";
-			lanes = line_aggr(linesPR1, 4.0, 0.2);
-			if (!lanes.empty()) {
+
+			lanes = line_aggr(linesPR1, 4.0, 0.2); //of the lines in each linesPR vector
+			if (!lanes.empty()) {                  // the line_aggr is used to find a single line
 				Line l1;
 				for (size_t i = 0; i < lanes.size(); i++) {
 					l1 = lanes[0];
-					lr1 = lanes[0];
+					//lr1 = lanes[0];
 					Point rt, rb;
 					rt = l1.p1(cr.size().width * 0.5, 0);
 					rb = l1.p2(cr.size().width * 0.5, 0);
@@ -1711,12 +1742,12 @@ void Lane::find_R_lane_warped() {
 
 		if (!linesPR2.empty()) {
 			//cout << "\nHERE ";
-			lanes2 = line_aggr(linesPR2, 4.0, 0.2);
-			if (!lanes2.empty()) {
+			lanes2 = line_aggr(linesPR2, 4.0, 0.2); //of the lines in each linesPR vector
+			if (!lanes2.empty()) {                   // the line_aggr is used to find a single line
 				Line l1;
 				for (size_t i = 0; i < lanes2.size(); i++) {
 					l1 = lanes2[0];
-					lr2 = lanes2[0];
+					//lr2 = lanes2[0];
 					Point rt, rb;
 					rt = l1.p1(cr.size().width * 0.5, 0);
 					rb = l1.p2(cr.size().width * 0.5, 0);
@@ -1731,10 +1762,10 @@ void Lane::find_R_lane_warped() {
 		}
 
 		if (lanesf.size() == 1) {
-			right_R.push_back(lanesf[0]);
+			right_R.push_back(lanesf[0]); //one line found
 		}
-		if (lanesf.size() > 1) {
-			Line l1, l2;
+		if (lanesf.size() > 1) { //more than one, the inner and outer is determined 
+			Line l1, l2;		 //using the first two lines
 			l1 = lanesf[0];
 			l2 = lanesf[1];
 			Point cntr = lane_poly_ctr(l1, l2, cr.size().width * 0.5, 0);
@@ -1759,7 +1790,8 @@ void Lane::find_R_lane_warped() {
 }
 
 void Lane::find_L_lane_warped() {
-
+	//Find the lane on the left side.
+	//Works the same as the find_R_lane_warped()
 	if (!can_road.empty()) {
 
 		Rect roiL;
@@ -2011,20 +2043,23 @@ double Lane::get_bigger_angle(double a1, double a2) {
 void Lane::det_warped_ang() {
 	Line ref(tp_adj_r, bt_adj_r);
 	Point ref_md = ref.mid();
+	//determines the angles made by the lines found on the left and right with respect
+	// to the vertical. if its 0, it means the robots going straight, anymore is a deviations from the track and
+	// needs to be corrected.
 	//the program will only turn if the detected angle is >10
 
-	if (right_R.size() > 1) {
-		Line lane = right_R[0];
+	if (right_R.size() > 1) { //two lines found, they are parrallel so the angle with respect to the vertical
+		Line lane = right_R[0]; //are only slightly different
 		Line lane2 = right_R[1];
 
 		double ang_md = ang_w_yaxis(lane);
-		double ang_cor = left_ang_actual(ang_md);
-		double ang_md2 = ang_w_yaxis(lane2);
-		double ang_cor2 = left_ang_actual(ang_md2);
-
-		Point l1m, l2m;
-		l1m = lane.mid(cr.size().width * 0.5, 0);
-		l2m = lane2.mid(cr.size().width * 0.5, 0);
+		double ang_cor = left_ang_actual(ang_md); // the warp function is not perfect and the perspective 
+		double ang_md2 = ang_w_yaxis(lane2);      // found is not the ideal of looking down directly from above
+		double ang_cor2 = left_ang_actual(ang_md2); //so, the angle shown by the program was compared to the angle made
+													//in real life and a relation ship was determined by polynomial regression
+		Point l1m, l2m;								//the left_ang_actual function corrects the found angle.
+		l1m = lane.mid(cr.size().width * 0.5, 0);   //the same function is done to the laft side lane.
+		l2m = lane2.mid(cr.size().width * 0.5, 0);   
 
 		int d1, d2;
 
@@ -2041,7 +2076,7 @@ void Lane::det_warped_ang() {
 
 		if (ang_md >= 10 && ang_md2 >= 10) {
 			//tracking to the right correct left
-			double angc = get_bigger_angle(ang_cor, ang_cor2);
+			double angc = get_bigger_angle(ang_cor, ang_cor2);  //uses the largest of the angles between inner/outer
 			v1 = 180;
 			v2 = 85;
 			th = (ang_cor * 1000);
@@ -2049,7 +2084,7 @@ void Lane::det_warped_ang() {
 
 		//right_dist_check(d1,d2,75,10.0);
 	}
-
+	
 
 	if (right_R.size() > 0) {
 		Line lane = right_R[0];
@@ -2195,7 +2230,8 @@ void Lane::det_warped_ang() {
 
 
 vector <short int> Lane::spd_values() {
-
+	//Function returns a vector with the direction and angle to
+	//turn to the Vision class.
 	vector <short int> val;
 	val.push_back(v1);
 	val.push_back(v2);

@@ -35,7 +35,8 @@ using namespace std;
 using namespace chrono;
 
 Vision::Vision(Mat Right_sign, Mat Left_sign, Mat stop_sign, Mat green_sign, VideoCapture cap) {
-
+	//Constructor for Vision class. initalises the signs and obtains
+	//the video capture.
 	this->Right_sign = Right_sign;
 	this->Left_sign = Left_sign;
 	this->stop_sign = stop_sign;
@@ -61,19 +62,21 @@ Vision::~Vision() {
 
 void Vision::capt() {
 
+	//captures the video, checks 
+	// the camera first.
 	if (!c.isOpened()) {
 		cerr << "ERROR: Could not open camera" << std::endl;
 
 	}
-	start = clock();
+	start = clock(); //For FPS counter
 	c.read(fr);
 
 }
 
 void Vision::disp() {
 
-	end = clock();
-
+	end = clock();//For FPS counter
+	//displays frame
 	fps_counter();
 	if (!fr.empty()) {
 		imshow("DISPLAY", fr);
@@ -87,20 +90,22 @@ void Vision::disp() {
 
 void Vision::manual() {
 
-	R1.manual();
+	R1.manual(); //manually control robot
 
 };
 
 
 void Vision::get_info() {
 
-	R1.get_info();
+	R1.get_info();//Receive data from Arduino
 
 };
 
 
 void Vision::fps_counter() {
-
+	//calculates fps using the start time between when the frame is
+	//captured, processed, and displayed.
+	//also calculates time taken
 	const int num_frames = 1;
 	double fpsLive;
 
@@ -114,6 +119,9 @@ void Vision::fps_counter() {
 }
 
 void Vision::info() {
+	//Displays the received data from
+	//the arduino that is light intensity
+	// and the distance received by the ultrasound sensor
 	String L, D;
 	short int li, di, vi1, vi2;
 	li = R1.get_li();
@@ -138,7 +146,11 @@ void Vision::info() {
 };
 
 void Vision::shape_det(Mat& img, vector<vector<Point>> contours, vector<Vec4i> hierarchy, double len1, double as_r1, int ar_l, int ar_h, bool& match, vector<double>tet1) {
-
+	//Detects the stop go signs that are hexagonal shaped
+	// Matches the shape found with a template loaded by Improc 
+	// Uses the perimeter (len1), aspect ratio (as_r1) 
+	// an upper and lower limit for the area ar_l, ar_h and
+	// the angle made by the vertices of the shape with respect to the center (tet1).
 	double peri;
 	double H_l, L_l;
 	double thet_tol; //tolerance for the angle: +-0.1
@@ -244,13 +256,16 @@ void Vision::shape_det(Mat& img, vector<vector<Point>> contours, vector<Vec4i> h
 }
 
 double Vision::compare_hu(Mat& img, Mat& img2, double& match, double& Ma) {
+	//compares the Hu moments of the img with img2
+	//There are seven Hu moments for each shape
+	
 
 	Moments M = moments(img, false);
 	double hM[7];
 	HuMoments(M, hM);
 	for (int i = 0; i < 7; i++)
 	{
-		hM[i] = -1 * copysign(1.0, hM[i]) * log10(abs(hM[i]));
+		hM[i] = -1 * copysign(1.0, hM[i]) * log10(abs(hM[i]));//The functions calculates the moments for each shape 
 	}
 
 	Moments M2 = moments(img2, false);
@@ -265,11 +280,11 @@ double Vision::compare_hu(Mat& img, Mat& img2, double& match, double& Ma) {
 		double d = abs(hM[i] - hM2[i]);
 
 		if (d < 1) {
-			match++;
-		}
+			match++; //if the absolute difference between the moments of the 
+		}			 //shapes ae less than 1, it is counted as a match
 
 	}
-	Ma = match / 7;
+	Ma = match / 7; //number of matches out of the 7 moments
 
 
 	if ((hM[6] < 0 && hM2[6]>0) || (hM[6] > 0 && hM2[6] < 0)) {
@@ -278,13 +293,15 @@ double Vision::compare_hu(Mat& img, Mat& img2, double& match, double& Ma) {
 
 	}
 
-	return Ma;
+	return Ma; //returns the match found
 
 }
 
 
 void Vision::get_back_proj(Mat& color, Mat& color2, Mat& imgtresh, Mat& imgtresh2, int t_l, int t_h, int t_l2, int t_h2) {
-
+	//Uses a provided histogram (color) and finds the 
+	// tresholded image (imgtresh) based on the provided upper/lower limits
+	// finds the tresholded images for both colored signs
 	int hbins = 30, sbins = 32;
 	int histSize = MAX(hbins, sbins);
 	float hue_range[] = { 0, 180 };
@@ -306,10 +323,10 @@ void Vision::get_back_proj(Mat& color, Mat& color2, Mat& imgtresh, Mat& imgtresh
 
 	//Skipped the calchist and normalize funcs.
 
-	calcBackProject(&huefr, 1, 0, color, dest, &ranges, 1, true);
-	calcBackProject(&huefr, 1, 0, color2, dest2, &ranges, 1, true);
+	calcBackProject(&huefr, 1, 0, color, dest, &ranges, 1, true); // calculates the back projection based on the 
+	calcBackProject(&huefr, 1, 0, color2, dest2, &ranges, 1, true); // provided histogram
 
-	threshold(dest, imgtresh, t_l, t_h, THRESH_BINARY); //needs to be an argument value
+	threshold(dest, imgtresh, t_l, t_h, THRESH_BINARY); 
 	threshold(dest2, imgtresh2, t_l2, t_h2, THRESH_BINARY);
 
 	dilate(imgtresh, imgtresh, kernel);
@@ -318,6 +335,8 @@ void Vision::get_back_proj(Mat& color, Mat& color2, Mat& imgtresh, Mat& imgtresh
 }
 
 void Vision::Get_back_proj(Mat& color, Mat& imgtresh, int t_l, int t_h) {
+	//same as get_back_proj, except only finds for one histogram
+
 	int hbins = 30, sbins = 32;
 	int histSize = MAX(hbins, sbins);
 	float hue_range[] = { 0, 180 };
@@ -336,28 +355,31 @@ void Vision::Get_back_proj(Mat& color, Mat& imgtresh, int t_l, int t_h) {
 	int ch[] = { 0, 0 };
 	mixChannels(&hsvfr, 1, &huefr, 1, ch, 1);
 
-	calcHist(&hsvfr, 1, channels, Mat(), histfr, 1, &histSize, &ranges, true, false); //?? these 2 functions
+	calcHist(&hsvfr, 1, channels, Mat(), histfr, 1, &histSize, &ranges, true, false); 
 	normalize(histfr, histfr, 0, 255, NORM_MINMAX, -1, Mat());
 
 	calcBackProject(&huefr, 1, 0, color, dest, &ranges, 1, true); //the color needs to be argument (Mat)
-	 //Lo of 35 seems ok
+	
 
 	threshold(dest, imgtresh, t_l, t_h, THRESH_BINARY); //needs to be an argument value
 
-	dilate(imgtresh, imgtresh, kernel); //return img tresh
+	dilate(imgtresh, imgtresh, kernel); 
 
 }
 
 void Vision::Match_arrow(double& as_rlR, double& as_rhR, int& arlR, bool& foundR, double& m_rR, double& as_rlL, double& as_rhL, int& arlL, bool& foundL, double& m_rL) {
-	////Overloaded version
+	////Overloaded version finds both laft and right
+	//Function finds an arrow sign using the compare_hu function.
+	//It uses a provided aspect ratio range and area and invesigates
+	//regions of interest that meets the dimensional requirements specified
 	Mat HSV, mask, roi, HSV2, maskR, maskL;
 
 	cvtColor(fr, HSV, COLOR_BGR2HSV);
 
 	//cvtColor(arrow, HSV2, COLOR_BGR2HSV);
-	maskR = Ri.ret_mask();
-	maskL = L.ret_mask();
-
+	maskR = Ri.ret_mask();  //the template of the right/left arrows from Improc, Match_arrow 
+	maskL = L.ret_mask();   //calculates the Hu moments of these templates and matches them with 
+							//the shapes found
 	Scalar lower(0, 0, 0);
 	Scalar upper(179, 255, 100); //120
 	Scalar lower1(0, 0, 0);
@@ -378,43 +400,43 @@ void Vision::Match_arrow(double& as_rlR, double& as_rhR, int& arlR, bool& foundR
 	vector<vector<Point>> convexHulls(contours.size());
 	vector<vector<Point> >hull(contours.size());
 
-	for (int i = 0; i < contours.size(); i++) {
+	for (int i = 0; i < contours.size(); i++) {  
 
 		convexHull(contours[i], hull[i]);
 		approxPolyDP(hull[i], conPoly[i], 1, true);
 		int ar = contourArea(hull[i]);
 
-		if (ar > 1500 && ar < 25000) {
+		if (ar > 1500 && ar < 25000) { 
 			boundRect[i] = boundingRect(hull[i]);
 			double as_r = ((double)boundingRect(hull[i]).width / (double)boundingRect(hull[i]).height); //AR= W/H
 			roi = mask(boundingRect(hull[i]));
 			double MatchR = 0;
 			double MR = 0;
-			compare_hu(roi, maskR, MatchR, MR);
-			double MatchL = 0;
+			compare_hu(roi, maskR, MatchR, MR);  //calls the compare_hu with the arrow template
+			double MatchL = 0;                   //from improc
 			double ML = 0;
 			compare_hu(roi, maskL, MatchL, ML);
 			//imshow("roi", mask);
-			if ((ar >= arlR) && ((as_r <= as_rhR) && (as_r >= as_rlR)) && (MR == m_rR)) {
-				string a = to_string(ar);
-				string ma = to_string(MR);
+			if ((ar >= arlR) && ((as_r <= as_rhR) && (as_r >= as_rlR)) && (MR == m_rR)) { //requirments for the area,
+				string a = to_string(ar);												  // aspect ratio, and the match required 
+				string ma = to_string(MR);												  // (MR)
 				string aR = to_string(as_r);
 				putText(fr, a, { boundRect[i].x,boundRect[i].y }, FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0), 2);
 				putText(fr, aR, { boundRect[i].x + 75,boundRect[i].y }, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0), 2);
 				putText(fr, ma, { boundRect[i].x + 75,boundRect[i].y + 80 }, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0), 2);
 				rectangle(fr, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 0, 0), 2);
-				foundR = true;
+				foundR = true;        //Its a positive match, arrow found
 				break;
 			}
-			if ((ar >= arlL) && ((as_r <= as_rhL) && (as_r >= as_rlL)) && (ML == m_rL)) {
-				string a = to_string(ar);
-				string ma = to_string(ML);
+			if ((ar >= arlL) && ((as_r <= as_rhL) && (as_r >= as_rlL)) && (ML == m_rL)) {//requirments for the area,
+				string a = to_string(ar);												 // aspect ratio, and the match required 
+				string ma = to_string(ML);												 // (ML)
 				string aR = to_string(as_r);
 				putText(fr, a, { boundRect[i].x,boundRect[i].y }, FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0), 2);
 				putText(fr, aR, { boundRect[i].x + 75,boundRect[i].y }, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0), 2);
 				putText(fr, ma, { boundRect[i].x + 75,boundRect[i].y + 80 }, FONT_HERSHEY_PLAIN, 1, Scalar(255, 255, 0), 2);
 				rectangle(fr, boundRect[i].tl(), boundRect[i].br(), Scalar(0, 0, 0), 2);
-				foundL = true;
+				foundL = true;         //Its a positive match, arrow found
 				break;
 			}
 		}
@@ -424,7 +446,10 @@ void Vision::Match_arrow(double& as_rlR, double& as_rhR, int& arlR, bool& foundR
 
 
 bool Vision::Match_arrow(Mat& fr, Mat& arrow, double& as_rl, double& as_rh, int& arl, bool& found, double& m_r) {
-
+	//Function finds an arrow sign using the compare_hu function.
+	//It uses a provided aspect ratio range and area and invesigates
+	//regions of interest that meetes the dimensional requirements specified
+	//Finds matches for one arrow.
 	Mat HSV, mask, roi, HSV2, mask2;
 	double l, h;
 	l = as_rl;
@@ -488,25 +513,24 @@ bool Vision::Match_arrow(Mat& fr, Mat& arrow, double& as_rl, double& as_rh, int&
 	return found;
 }
 
-
-
 double Vision::vector_match(vector<double>v1, vector<double>v2, double& m_v, double tol) {
-
+	//iterates through the first vectors to determine if the values 
+	// are within a provided tolerance to the second vector.
 	for (int i = 0; i < v1.size(); i++) {
 		if ((v1[i] <= v2[i] + tol) && (v1[i] >= v2[i] - tol)) {
 			m_v++;
 		}
 	}
-	return m_v;
+	return m_v; //return the match
 
 
 }
 
-
-
-
-
 void Vision::stop_go() {
+	//Function finds the red/green signs based on a given histogram, shape perimeter
+	//aspect ratio, and the angles made by the vertices of the shape with respect to the centre of the shape.
+	// Uses these properties to find the signs
+
 	//Green first
 	double len_tempG, as_r_tempG;
 	int ar_lG, ar_hG;
@@ -526,7 +550,6 @@ void Vision::stop_go() {
 	len_tempG = G.get_len();
 	as_r_tempG = G.get_as_r();
 	tethG = G.get_t_w_c();
-
 
 	//Red now
 	double len_tempR, as_r_tempR;
@@ -548,23 +571,23 @@ void Vision::stop_go() {
 	as_r_tempR = R.get_as_r();
 	tethR = R.get_t_w_c();
 
-	get_back_proj(histG, histR, imgtreshG, imgtreshR, t_lG, t_hG, t_lR, t_hR);
+	get_back_proj(histG, histR, imgtreshG, imgtreshR, t_lG, t_hG, t_lR, t_hR);   
 
-	findContours(imgtreshG, contoursG, hierarchyG, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
-	findContours(imgtreshR, contoursR, hierarchyR, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
+	findContours(imgtreshG, contoursG, hierarchyG, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE); //finds the contours of the Treshold image found using 
+	findContours(imgtreshR, contoursR, hierarchyR, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE); //the respective histograms
 
-	shape_det(fr, contoursG, hierarchyG, len_tempG, as_r_tempG, ar_lG, ar_hG, matchG, tethG);
-	shape_det(fr, contoursR, hierarchyR, len_tempR, as_r_tempR, ar_lR, ar_hR, matchR, tethR);
+	shape_det(fr, contoursG, hierarchyG, len_tempG, as_r_tempG, ar_lG, ar_hG, matchG, tethG); //uses shape_detect to find the hexagonal shape 
+	shape_det(fr, contoursR, hierarchyR, len_tempR, as_r_tempR, ar_lR, ar_hR, matchR, tethR); //based on the geometric properties specified.
 
 
-	if (matchG == true) {
+	if (matchG == true) {  //GO sign found
 
 		putText(fr, "GO", { 250,100 }, FONT_HERSHEY_PLAIN, 9, Scalar(0, 255, 0), 4);
 		R1.robot_go();
 
 	}
 
-	if (matchR == true) {
+	if (matchR == true) { //STOP sign found
 
 		putText(fr, "STOP", { 150,100 }, FONT_HERSHEY_PLAIN, 9, Scalar(0, 0, 255), 4);
 		R1.robot_stop();
@@ -580,6 +603,8 @@ void Vision::stop_go() {
 
 
 void Vision::Red(int& tresh_h_red, int& tresh_l_red) {
+	//Similar to stop_go, but only finds 
+	//the stop sign
 	double len_temp, as_r_temp;
 	int ar_l, ar_h;
 	ar_l = 14000;
@@ -606,7 +631,7 @@ void Vision::Red(int& tresh_h_red, int& tresh_l_red) {
 	findContours(imgtresh, contours, hierarchy, RETR_EXTERNAL, CHAIN_APPROX_SIMPLE);
 
 
-	shape_det(fr, contours, hierarchy, len_temp, as_r_temp, ar_l, ar_h, match, teth);
+	shape_det(fr, contours, hierarchy, len_temp, as_r_temp, ar_l, ar_h, match, teth); //uses the overloaded version of shape_det
 
 	if (match == true) {
 
@@ -619,6 +644,8 @@ void Vision::Red(int& tresh_h_red, int& tresh_l_red) {
 }
 
 void Vision::Green(int& tresh_h_green, int& tresh_l_green) {
+	//Similar to stop_go, but only finds 
+	//the go sign
 	double len_temp, as_r_temp;
 	int ar_l, ar_h;
 	ar_l = 14000;
@@ -653,7 +680,9 @@ void Vision::Green(int& tresh_h_green, int& tresh_l_green) {
 
 }
 void Vision::Road(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vmax) {
-
+	//Uses the lane class to find the alne lines and determine the response of the robot
+	//More sensitive to changes in the HSV range, so this functions requires that these
+	//values be manually controlled.
 	namedWindow("Trackbars", WINDOW_AUTOSIZE);
 	createTrackbar("Hue Min", "Trackbars", &hmin, 179);
 	createTrackbar("Hue Max", "Trackbars", &hmax, 179);
@@ -689,13 +718,15 @@ void Vision::Road(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vm
 
 	vals = L.spd_values();
 
-	double t_tl, t_tr; //turning rate (sec/degree) left and right
-	t_tl = 0.0177611;
-	t_tr = 0.0210633;
+	double t_tl, t_tr; //turning rate (sec/degree) left and right, established experimentally 
+	t_tl = 0.0177611;  //by determining the average time taken for the robot to turn 90 degrees 
+	t_tr = 0.0210633;  //then finding the time taken to turn one degree.	
 	short int v1 = vals[0];
 	short int v2 = vals[1];
 
-
+	//the robot steers by powering one servo while the other remains statoinary.
+	//It can turn a specified angle by steering for a specified time that is obtained 
+	// by multipliying the angle it needs to turn by the turning rate in each direction
 
 	if (vals.size() > 1 && stop_seen == false) {
 
@@ -705,18 +736,18 @@ void Vision::Road(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vm
 		}
 
 
-		if (v1 == 85 && v2 == 0) {
-
-
+		if (v1 == 85 && v2 == 0) { 
+								  
 			short int th = vals[2];
 			double thet = double(th);
-			double th_t = (thet / 1000);
+			double th_t = (thet / 1000); //The lane function determines the deviation angle of the robot (th_t)
 			double time = th_t * t_tl;
 			putText(fr, to_string(time), Point(300, 400), FONT_HERSHEY_PLAIN, 1, Scalar(25, 75, 255), 1);
-			R1.robot_st_left(time);
+			R1.robot_st_left(time);  // The function then steers according to the deviation angle to correct itslef
+									 // it steers the robot for the specified time to turn according to the deviation angle
 		}
 
-		if (v1 == 180 && v2 == 85) {
+		if (v1 == 180 && v2 == 85) { //Same as above but to steer right.
 			short int th = vals[2];
 			double thet = double(th);
 			double th_t = (thet / 1000);
@@ -730,15 +761,17 @@ void Vision::Road(int& hmin, int& hmax, int& smin, int& smax, int& vmin, int& vm
 }
 
 void Vision::left_right() {
+	// Function that detects an arrow sign and steers the robot by 90 degrees left or right.
+	//Utilizes the Match_arrow function along with certain dimensional properties to recognize the sign
 	//Right
 	double as_rlR, as_rhR;
 	int arlR;
 	bool foundR = false;
 	bool finR = false;
 	double timeR = 0.7581;
-	as_rlR = 0.4;
-	as_rhR = 0.6;
-	arlR = 6600;  //about 50 cm (11500) away
+	as_rlR = 0.4;   //Minimum aspect ratio
+	as_rhR = 0.6;   //Maximum aspect ratio
+	arlR = 6600;  //The area of the shape (about 50 cm (11500) away)
 	double m_rR = 1.0; //Match needed
 	static int r_times = 0; //number of times the robot has turned
 	static int l_times = 0;
@@ -748,9 +781,9 @@ void Vision::left_right() {
 	bool foundL = false;
 	bool finL = false;
 	double timeL = 0.70125;
-	as_rlL = 0.4;
-	as_rhL = 0.6;
-	arlL = 19500; //abt 44 cm (12500) away
+	as_rlL = 0.4; //Minimum aspect ratio
+	as_rhL = 0.6;  //Maximum aspect ratio
+	arlL = 19500; //The area of the shape (abt 44 cm (12500) away)
 	double m_rL = 1.0; //Match needed
 
 	Match_arrow(as_rlR, as_rhR, arlR, foundR, m_rR, as_rlL, as_rhL, arlL, foundL, m_rL);
@@ -774,7 +807,8 @@ void Vision::left_right() {
 }
 
 void Vision::Right(int& match_method, int& treshM_l, int& treshM_H) {
-
+	//This function finds the right sign only
+	//the robots turns by 90 degrees by spining one servo in the opposite direction to the other
 	double as_rl, as_rh;
 	int arl;
 	bool found = false;
@@ -784,7 +818,7 @@ void Vision::Right(int& match_method, int& treshM_l, int& treshM_H) {
 	as_rh = 0.6;
 	arl = 11500;  //about 49 cm away
 	double m_r = 1.0; //Match needed
-	double timeR = 0.7581;
+	double timeR = 0.7581; //time needed to turn 90 to the right
 	Match_arrow(fr, Right_sign, as_rl, as_rh, arl, found, m_r);
 
 	if (found == true) {
@@ -796,7 +830,7 @@ void Vision::Right(int& match_method, int& treshM_l, int& treshM_H) {
 
 }
 void Vision::Left(int& treshM_l, int& treshM_H) {
-
+	//This function finds the left sign only
 	double as_rl, as_rh;
 	int arl;
 	bool found = false;
@@ -806,7 +840,7 @@ void Vision::Left(int& treshM_l, int& treshM_H) {
 	as_rh = 0.6;
 	arl = 12500; //abt 51 cm away
 	double m_r = 1.0; //Match needed
-	double timeL = 0.70125;
+	double timeL = 0.70125; //time needed to turn 90 to the left
 	Match_arrow(fr, Left_sign, as_rl, as_rh, arl, found, m_r);
 
 	if (found == true) {

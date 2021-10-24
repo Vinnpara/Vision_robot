@@ -34,6 +34,10 @@
 using namespace cv;
 using namespace std;
 using namespace chrono;
+//The Vision class detects the stop/go and left/right signs, lanes and sends commands to the robot using the Robot class.
+//It detects signs using preloaded images of the signs as templates. The Improc class is utilize to derieve properties 
+//from the templates that the Vision class uses to identify the signs. It uses the Lane class to identify the lanes and
+//for steering directions.
 
 class Vision {
 	short int v1, v2;

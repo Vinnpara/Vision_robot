@@ -25,8 +25,12 @@
 
 using namespace cv;
 using namespace std;
-
-
+//This class uses either a Point or a Vec4i and finds line
+//propeties such as gradient, y-intercept as well as mid point and
+//distance
+//the correction factor is used to draw the line, since the detect lanes function isolates
+//a quater of the screen. the correction factor translates the line to its correct position
+//Its mostly used in the Lane class
 class Line {
 	int x1, y1, x2, y2, m, c, mdx, mdy, yc, xc; //top and bottom cordinates, gradient, y intercept,mid x&y, y val for x arg, x val y arg
 	int x_c, y_c;

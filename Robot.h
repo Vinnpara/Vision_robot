@@ -6,8 +6,11 @@
 
 
 #pragma comment(lib, "winmm.lib")
-
-
+//The Robot class sends data to the Arduino and is used in the 
+//Vision class. v1 controls the right servo, v2 the left.
+//The robot turns by either spining both servos in opposite directions, or by 
+//keeping one stationary while the other spins. The first method is used to make 90 degree turns
+//while the other is used to steer the robot on the tracks
 class Robot {
 	short int v1, v2;
 	short unsigned int d,li;

@@ -104,7 +104,7 @@ void Robot::serial_r_w() {
 };
 
 void Robot::send_info() {
-	//writing part
+	//writing part, Send data to the arduino
 	const int NMAX = 64;
 	short int* ve1, * ve2;
 	
@@ -136,7 +136,7 @@ void Robot::send_info() {
 }
 
 void Robot::get_info() {
-
+	//receive data from arduino
 	Sleep(10);
 	arduino.readSerialPort(output, MAX_DATA_LENGTH);
 
@@ -178,6 +178,7 @@ void Robot::get_info() {
 }
 
 void Robot::manual() {
+	//Manually control robot
 	if (KEY(VK_DOWN)) //FORWARD
 	{
 		v1 = 0;
@@ -216,7 +217,7 @@ void Robot::manual() {
 
 
 void Robot::em_stop() {
-
+	//Emergency stop
 	if (d <= 7) {
 		v1 = v2 = 85;
 	}
@@ -224,7 +225,7 @@ void Robot::em_stop() {
 };
 
 void Robot::robot_go() {
-
+	//Go forward
 	v1 = 180;
 	v2 = 0;
 	send_info();
@@ -236,6 +237,7 @@ void Robot::robot_stop() {
 	send_info();
 };
 void Robot::robot_right() {
+	//turn right
 	v1 = 180;
 	v2 = 180;
 
@@ -243,6 +245,7 @@ void Robot::robot_right() {
 };
 
 void Robot::robot_left() {
+	//trun left
 	v1 = 0;
 	v2 = 0;
 	send_info();
@@ -251,6 +254,7 @@ void Robot::robot_left() {
 };
 
 void Robot::robot_ste_right(){
+	
 	v1 = 85;
 	v2 = 0;
 	send_info();
@@ -263,19 +267,21 @@ void Robot::robot_ste_left() {
 }
 
 void Robot::robot_st_right(double t) {
+	//the steer robot function takes the duration to 
+	//keep one servo stationary and spin the other
 
 	robot_ste_right();
 	clock_t st, end;
 	double time_gone;
 	time_gone = 0;
-	st = clock();
+	st = clock(); //start timer
 
 	while (time_gone <= t) {
 
 		end = clock();
 		double time_gone = abs((double(st) - double(end)) / double(CLOCKS_PER_SEC));
 
-		if (time_gone >=t) {
+		if (time_gone >=t) { //if the time reached by the timer the robot moves forward
 			robot_go();
 			break;
 
@@ -311,7 +317,9 @@ void Robot::robot_st_left(double t) {
 
 
 void Robot::turn_right(double t) {
-
+	//Similar to steer function but the turn function spins
+	//the servos in opposite directions to turn by 90 degrees for a 
+	//specified time.
 	clock_t st, end;
 	int ti;
 	double elapsed_time;

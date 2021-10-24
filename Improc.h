@@ -24,7 +24,11 @@
 
 using namespace cv;
 using namespace std;
-
+//This class provides preprocessing for the stop/go, arrow sign templates 
+//that the vision class uses to detect signs. It uses Canny edge detection
+//along with a treshold operation to detect the shape and obtain properties
+//such as the perimeter of the shape, aspect ratio and angles made by its vetices with respect to
+//the center. It reterives an image that isolates the black arrow sign as a template for arrow detection
 class Improc {
 
 	Mat mask, img, hist;
